@@ -98,11 +98,10 @@ export const getLessonSummary = async (req: Request, res: Response) => {
       console.log("Generating Summary");
       const summary = await generateLessonSummary(lesson.transcript, lesson.title);
       console.log("Generating Summary");
-      res.json({ ...summary, isAI: true });
-      console.log( res.json({ ...summary, isAI: true }));
+      return res.json({ ...summary, isAI: true });
     } catch {
       console.log("API Failed")
-      res.json({
+      return res.json({
         summary: lesson.transcript,
         keyPoints: [],
         isAI: false,
