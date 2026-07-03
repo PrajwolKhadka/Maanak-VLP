@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   gender: { type: String },
   avatar: { type: String },
   streak: { type: Number, default: 0 },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   lastActiveDate: { type: Date },
 }, { timestamps: true });
 
