@@ -19,12 +19,14 @@ export default function TopicDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [topicRes, chaptersRes] = await Promise.all([
+        const [topicRes, chaptersRes, noteRes] = await Promise.all([
           api.get(`/topics/${topicId}`),
           api.get(`/chapters/${topicId}`),
+          api.get(`/notes/topic/${topicId}`)
         ]);
         setTopicName(topicRes.data.name);
         setChapters(chaptersRes.data);
+        setNotes(noteRes.data);
       } finally {
         setLoading(false);
       }

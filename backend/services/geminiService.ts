@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, Type, Schema } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const MODEL_NAME = 'gemini-2.5-flash';
 
 export interface QuizQuestion {
   question: string;
@@ -17,7 +17,85 @@ export interface QuizInsights {
   summary: string;
 }
 
-// Generate quiz questions from lesson transcript
+// ── Schemas ──────────────────────────────────────────────────────────────────
+
+const quizQuestionSchema: Schema = {
+  type: Type.ARRAY,
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      question: { type: Type.STRING },
+      options: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: 'Exactly 4 options, prefixed with A., B., C., D.',
+      },
+      correctAnswer: {
+        type: Type.STRING,
+        description: 'Must match the exact string from the options array',
+      },
+      explanation: { type: Type.STRING },
+    },
+    required: ['question', 'options', 'correctAnswer', 'explanation'],
+  },
+};
+
+const quizInsightsSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    summary: { type: Type.STRING, description: '2-3 sentence overall performance summary' },
+    strongAreas: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          topic: { type: Type.STRING },
+          detail: { type: Type.STRING },
+        },
+        required: ['topic', 'detail'],
+      },
+    },
+    weakAreas: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          topic: { type: Type.STRING },
+          detail: { type: Type.STRING },
+        },
+        required: ['topic', 'detail'],
+      },
+    },
+    recommendedStudy: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          type: { type: Type.STRING, enum: ['video', 'chapter'] },
+          label: { type: Type.STRING },
+        },
+        required: ['type', 'label'],
+      },
+    },
+  },
+  required: ['summary', 'strongAreas', 'weakAreas', 'recommendedStudy'],
+};
+
+const lessonSummarySchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    summary: { type: Type.STRING, description: '2-3 sentence summary of the lesson' },
+    keyPoints: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: '3-5 key points from the lesson',
+    },
+  },
+  required: ['summary', 'keyPoints'],
+};
+
+// ── Functions ─────────────────────────────────────────────────────────────────
+
 export const generateQuizQuestions = async (
   transcript: string,
   lessonTitle: string,
@@ -26,33 +104,21 @@ export const generateQuizQuestions = async (
   const prompt = `
 You are a chemistry teacher creating a quiz for Nepal +2 students.
 Based on this lesson transcript about "${lessonTitle}", generate exactly ${count} multiple choice questions.
-
-Transcript:
-${transcript}
-
-Rules:
-- Each question must have exactly 4 options (A, B, C, D)
-- Only one correct answer
-- Include a short explanation for the correct answer
-- Questions should test conceptual understanding, not just memorization
-
-Respond ONLY with a valid JSON array, no markdown, no extra text:
-[
-  {
-    "question": "...",
-    "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
-    "correctAnswer": "A. ...",
-    "explanation": "..."
-  }
-]
+Questions should test conceptual understanding, not just memorization.
 `;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text().replace(/```json|```/g, '').trim();
-  return JSON.parse(text);
+  const response = await genAI.models.generateContent({
+    model: MODEL_NAME,
+    contents: [prompt, `Transcript:\n${transcript}`],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: quizQuestionSchema,
+    },
+  });
+
+  return JSON.parse(response.text!);
 };
 
-// Yeta bata quiz ko summary AI le dinxa! 
 export const generateQuizInsights = async (
   lessonTitle: string,
   questions: {
@@ -66,33 +132,28 @@ export const generateQuizInsights = async (
 You are an AI tutor analyzing a student's quiz performance on "${lessonTitle}".
 
 Quiz Results:
-${questions.map((q, i) => `
+${questions
+  .map(
+    (q, i) => `
 Q${i + 1}: ${q.question}
 Student Answer: ${q.userAnswer}
 Correct Answer: ${q.correctAnswer}
 Result: ${q.isCorrect ? 'Correct' : 'Incorrect'}
-`).join('')}
-
-Based on this, generate performance insights.
-
-Respond ONLY with valid JSON, no markdown, no extra text:
-{
-  "summary": "2-3 sentence overall performance summary",
-  "strongAreas": [
-    { "topic": "topic name", "detail": "why they did well" }
-  ],
-  "weakAreas": [
-    { "topic": "topic name", "detail": "what needs improvement" }
-  ],
-  "recommendedStudy": [
-    { "type": "video", "label": "suggested video or chapter title" }
-  ]
-}
+`
+  )
+  .join('')}
 `;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text().replace(/```json|```/g, '').trim();
-  return JSON.parse(text);
+  const response = await genAI.models.generateContent({
+    model: MODEL_NAME,
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: quizInsightsSchema,
+    },
+  });
+
+  return JSON.parse(response.text!);
 };
 
 export const generateLessonSummary = async (
@@ -105,14 +166,16 @@ Summarize this transcript for the lesson "${lessonTitle}" in simple, clear langu
 
 Transcript:
 ${transcript}
-
-Respond ONLY with valid JSON, no markdown:
-{
-  "summary": "2-3 sentence summary of the lesson",
-  "keyPoints": ["key point 1", "key point 2", "key point 3"]
-}
 `;
-  const result = await model.generateContent(prompt);
-  const text = result.response.text().replace(/```json|```/g, '').trim();
-  return JSON.parse(text);
+
+  const response = await genAI.models.generateContent({
+    model: MODEL_NAME,
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: lessonSummarySchema,
+    },
+  });
+
+  return JSON.parse(response.text!);
 };
