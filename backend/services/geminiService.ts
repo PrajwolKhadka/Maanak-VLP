@@ -17,8 +17,6 @@ export interface QuizInsights {
   summary: string;
 }
 
-// ── Schemas ──────────────────────────────────────────────────────────────────
-
 const quizQuestionSchema: Schema = {
   type: Type.ARRAY,
   items: {
