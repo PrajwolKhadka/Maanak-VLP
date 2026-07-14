@@ -1,7 +1,8 @@
 import express from 'express';
 import passport from 'passport';
-import { register, login, getMe, adminLogin, googleCallback, forgotPassword, resetPassword } from '../controllers/authController';
+import { register, login, getMe, adminLogin, googleCallback, forgotPassword, resetPassword, updateAvatar, deleteAccount } from '../controllers/authController';
 import { protectUser } from '../middleware/authMiddleware';
+import { upload } from '../middleware/upload';
 
 const router = express.Router();
 
@@ -17,5 +18,7 @@ router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', session: false }),
   googleCallback
 );
+router.put('/avatar', protectUser, upload.single('avatar'),updateAvatar);
+router.put('/account', protectUser, deleteAccount);
 
 export default router;
