@@ -222,3 +222,32 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// @PUT /api/auth/avatar
+export const updateAvatar = async (req: any, res: Response) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const avatarUrl = `http://localhost:5001/uploads/${file.filename}`;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: avatarUrl },
+      { new: true }
+    ).select('-password');
+
+    res.json({ avatar: user?.avatar, user });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+};
+// @DELETE /api/auth/account
+export const deleteAccount = async (req: any, res: Response) => {
+  try {
+    const { reason } = req.body;
+    await User.findByIdAndDelete(req.user._id);
+    res.json({ message: 'Account deleted', reason });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+};
