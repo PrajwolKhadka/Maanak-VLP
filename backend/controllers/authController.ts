@@ -229,7 +229,7 @@ export const updateAvatar = async (req: any, res: Response) => {
     const file = req.file;
     if (!file) return res.status(400).json({ message: 'No file uploaded' });
 
-    const avatarUrl = `${process.env.SERVER_URL}/uploads/${file.filename}`;
+    const avatarUrl = `http://localhost:5001/uploads/${file.filename}`;
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar: avatarUrl },
@@ -241,7 +241,6 @@ export const updateAvatar = async (req: any, res: Response) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 // @DELETE /api/auth/account
 export const deleteAccount = async (req: any, res: Response) => {
   try {
