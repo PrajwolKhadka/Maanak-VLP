@@ -72,7 +72,9 @@ export const updateNote = async (req: any, res: Response) => {
 // @DELETE /api/notes/:id — delete note
 export const deleteNote = async (req: any, res: Response) => {
   try {
-    await Note.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    const note = await Note.findOne({ _id: req.params.id, user: req.user._id });
+    if (!note) return res.status(404).json({ message: 'Note not found' });
+    await Note.findByIdAndDelete(req.params.id);
     res.json({ message: 'Note deleted' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
