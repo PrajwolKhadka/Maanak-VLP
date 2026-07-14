@@ -15,6 +15,7 @@ import dashboardRoutes from './routes/dashboardRoutes';
 import connectDB from './config/db';
 
 import './config/passport';
+import path from 'path';
 
 
 
@@ -49,7 +50,7 @@ app.use('/api/lessons', lessonRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
+app.use('/uploads', express.static(path.join(__dirname, "uploads")));
 const PORT = process.env.PORT || 5001;
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
