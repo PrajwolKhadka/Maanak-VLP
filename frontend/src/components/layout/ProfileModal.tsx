@@ -181,7 +181,7 @@ export default function ProfileModal({ onClose }: ProfileModalProps) {
               <select
                 value={deleteReason}
                 onChange={(e) => setDeleteReason(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-300 text-sm"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-300 text-sm text-black"
               >
                 <option value="">Select a reason...</option>
                 {DELETE_REASONS.map((r) => (
