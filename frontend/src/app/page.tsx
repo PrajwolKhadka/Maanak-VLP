@@ -92,7 +92,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-white overflow-hidden">
       {/* Navbar */}
       <nav className="flex items-center justify-between px-10 py-5 max-w-7xl mx-auto relative z-50">
-        <Image src="/logo.png" alt="Maanak" width={150} height={45} style={{ width: '150px', height: 'auto' }} />
+        <Image src="/frame7.png" alt="Maanak" width={150} height={45} style={{ width: '150px', height: 'auto' }} />
         <div className="flex items-center gap-8">
           <button onClick={() => setTopicsOpen(!topicsOpen)}
             className={`font-medium transition ${topicsOpen ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900'}`}>

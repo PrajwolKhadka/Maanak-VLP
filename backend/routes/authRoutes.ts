@@ -19,6 +19,6 @@ router.get('/google/callback',
   googleCallback
 );
 router.put('/avatar', protectUser, upload.single('avatar'),updateAvatar);
-router.put('/account', protectUser, deleteAccount);
-
+// router.put('/account', protectUser, deleteAccount);
+router.delete('/account', protectUser, deleteAccount);
 export default router;
