@@ -21,30 +21,66 @@ export default function LessonPage() {
     keyPoints: string[];
   } | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [lessonRes, notesRes] = await Promise.all([
-          api.get(`/lessons/single/${lessonId}`),
-          api.get(`/notes/${lessonId}`),
-        ]);
-        setLesson(lessonRes.data);
-        setNotes(notesRes.data);
-        if (notesRes.data.length > 0) setNoteContent(notesRes.data[0].content);
-        if (lessonRes.data.transcript && !summaryFetched.current) {
-          setSummaryLoading(true);
-          api
-            .get(`/lessons/single/${lessonId}/summary`)
-            .then((res) => setSummary(res.data))
-            .finally(() => setSummaryLoading(false));
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [lessonId]);
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const [lessonRes, notesRes] = await Promise.all([
+  //         api.get(`/lessons/single/${lessonId}`),
+  //         api.get(`/notes/${lessonId}`),
+  //       ]);
+  //       setLesson(lessonRes.data);
+  //       setNotes(notesRes.data);
+  //       if (notesRes.data.length > 0) setNoteContent(notesRes.data[0].content);
+  //       if (lessonRes.data.transcript && !summaryFetched.current) {
+  //         setSummaryLoading(true);
+  //         api
+  //           .get(`/lessons/single/${lessonId}/summary`)
+  //           .then((res) => setSummary(res.data))
+  //           .finally(() => setSummaryLoading(false));
+  //       }
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchData();
+  // }, [lessonId]);
+useEffect(() => {
+  let cancelled = false;
 
+  const fetchData = async () => {
+    try {
+      const [lessonRes, notesRes] = await Promise.all([
+        api.get(`/lessons/single/${lessonId}`),
+        api.get(`/notes/${lessonId}`),
+      ]);
+
+      if (cancelled) return;
+
+      setLesson(lessonRes.data);
+      setNotes(notesRes.data);
+      if (notesRes.data.length > 0) setNoteContent(notesRes.data[0].content);
+
+      if (lessonRes.data.transcript) {
+        setSummaryLoading(true);
+        api.get(`/lessons/single/${lessonId}/summary`)
+          .then(res => {
+            if (!cancelled) setSummary(res.data);
+          })
+          .finally(() => {
+            if (!cancelled) setSummaryLoading(false);
+          });
+      }
+    } finally {
+      if (!cancelled) setLoading(false);
+    }
+  };
+
+  fetchData();
+
+  return () => {
+    cancelled = true;
+  };
+}, [lessonId]);
   const handleSaveNote = async () => {
     if (!noteContent.trim()) return;
     setNoteSaving(true);
