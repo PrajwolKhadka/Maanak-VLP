@@ -31,9 +31,17 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogle = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}/api/auth/google`;
-  };
+const handleGoogle = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!apiUrl) {
+    setError('Google login is not configured.');
+    return;
+  }
+
+  const backendUrl = apiUrl.replace(/\/api\/?$/, '');
+  window.location.assign(`${backendUrl}/api/auth/google`);
+};
 
   return (
     <div className="min-h-screen relative flex items-center justify-end pr-50">
